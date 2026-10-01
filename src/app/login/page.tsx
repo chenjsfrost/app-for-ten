@@ -12,7 +12,9 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto mt-16 w-full max-w-sm rounded-lg border border-black/10 bg-white p-6 shadow-sm">
-      <h1 className="mb-6 text-2xl font-bold text-orange-600">
+      <p className="text-3xl font-bold text-orange-600">Tenbao</p>
+      <p className="mb-6 text-sm text-neutral-500">A little marketplace for ten friends</p>
+      <h1 className="mb-4 text-xl font-semibold text-neutral-900">
         {mode === "login" ? "Log in" : "Create account"}
       </h1>
       <form action={action} className="flex flex-col gap-3">

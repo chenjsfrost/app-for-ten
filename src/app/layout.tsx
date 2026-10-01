@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "App for Ten",
+  title: "Tenbao",
   description: "A tiny marketplace for a group of up to ten people",
 };
 
@@ -41,7 +41,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <header className="bg-orange-600 text-white">
           <nav className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-4 px-4 py-3">
             <Link href="/" className="mr-auto text-xl font-bold">
-              App for Ten
+              Tenbao
             </Link>
             {user && (
               <>

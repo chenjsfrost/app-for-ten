@@ -1,6 +1,6 @@
-# app-for-ten
+# Tenbao
 
-A tiny Shopee/Taobao-style marketplace for a private group of up to ten people.
+(Repo: `app-for-ten`.) A tiny Shopee/Taobao-style marketplace for a private group of up to ten people.
 Members can list items, browse, add to cart, and place orders.
 
 **Stack:** Next.js (App Router) · Supabase (Auth + Postgres) · Tailwind CSS · deploy on Vercel
