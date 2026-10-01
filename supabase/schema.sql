@@ -1,4 +1,5 @@
 -- Run this once in the Supabase dashboard: SQL Editor -> New query -> paste -> Run.
+-- Then run each file in supabase/migrations/ in order.
 
 -- Profiles: one row per user, created automatically on sign-up.
 create table public.profiles (

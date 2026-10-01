@@ -55,6 +55,18 @@ export async function checkout() {
   redirect("/orders");
 }
 
+export async function buyNow(formData: FormData) {
+  const { supabase } = await requireUser();
+  const productId = Number(formData.get("product_id"));
+  const { error } = await supabase.rpc("buy_now", {
+    p_product_id: productId,
+    p_quantity: Math.max(1, Number(formData.get("quantity") || 1)),
+  });
+  if (error) redirect(`/products/${productId}?error=${encodeURIComponent(error.message)}`);
+  revalidatePath("/", "layout");
+  redirect("/orders");
+}
+
 export async function createProduct(formData: FormData) {
   const { supabase, user } = await requireUser();
   await supabase.from("products").insert({
@@ -81,37 +93,66 @@ export async function deleteProduct(formData: FormData) {
 type DemoProduct = {
   title: string;
   description: string;
+  category: string;
+  brand?: string;
   price: number;
+  discountPercentage: number;
+  rating: number;
   stock: number;
   thumbnail: string;
+  images: string[];
+  shippingInformation: string;
+  warrantyInformation: string;
+  returnPolicy: string;
+  reviews: { rating: number; comment: string; date: string; reviewerName: string }[];
 };
 
 // Fills the shop with sample items from DummyJSON (https://dummyjson.com), listed under the current user.
+// Items the user already has (matched by name) get their details refreshed instead of duplicated.
 export async function importDemoProducts() {
   const { supabase, user } = await requireUser();
-  const res = await fetch(
-    "https://dummyjson.com/products?limit=30&select=title,description,price,stock,thumbnail",
-  );
+  const res = await fetch("https://dummyjson.com/products?limit=30");
   if (!res.ok) redirect("/sell?error=Could not reach the demo products API");
   const { products } = (await res.json()) as { products: DemoProduct[] };
 
   const { data: existing } = await supabase
     .from("products")
-    .select("name")
+    .select("id, name")
     .eq("seller_id", user.id);
-  const existingNames = new Set((existing ?? []).map((p) => p.name));
+  const existingIds = new Map((existing ?? []).map((p) => [p.name, p.id]));
 
-  const rows = products
-    .filter((p) => !existingNames.has(p.title))
-    .map((p) => ({
-      seller_id: user.id,
-      name: p.title,
+  const toInsert = [];
+  for (const p of products) {
+    const details = {
       description: p.description,
+      category: p.category,
+      brand: p.brand ?? null,
       price: p.price,
-      stock: p.stock,
+      discount_percentage: p.discountPercentage,
+      rating: Math.round(p.rating * 10) / 10,
       image_url: p.thumbnail,
-    }));
-  if (rows.length > 0) await supabase.from("products").insert(rows);
+      images: p.images,
+      shipping_info: p.shippingInformation,
+      warranty_info: p.warrantyInformation,
+      return_policy: p.returnPolicy,
+      reviews: p.reviews.map(({ rating, comment, date, reviewerName }) => ({
+        rating,
+        comment,
+        date,
+        reviewerName,
+      })),
+    };
+    const id = existingIds.get(p.title);
+    if (id) {
+      await supabase.from("products").update(details).eq("id", id);
+    } else {
+      toInsert.push({ ...details, seller_id: user.id, name: p.title, stock: p.stock });
+    }
+  }
+  if (toInsert.length > 0) {
+    const { error } = await supabase.from("products").insert(toInsert);
+    if (error) redirect(`/sell?error=${encodeURIComponent(error.message)}`);
+  }
   revalidatePath("/", "layout");
   redirect("/");
 }
