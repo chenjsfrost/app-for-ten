@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { createProduct, deleteProduct } from "@/app/actions";
+import { createProduct, deleteProduct, importDemoProducts } from "@/app/actions";
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice, type Product } from "@/lib/types";
 
-export default async function SellPage() {
+export default async function SellPage({ searchParams }: PageProps<"/sell">) {
+  const { error } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -45,7 +46,13 @@ export default async function SellPage() {
       </form>
 
       <div className="rounded-lg bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-xl font-semibold">My listings</h2>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold">My listings</h2>
+          <form action={importDemoProducts}>
+            <button className="btn-secondary">Add 30 demo items</button>
+          </form>
+        </div>
+        {error && <p className="mb-4 rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}
         {products.length === 0 && <p className="text-neutral-600">Nothing listed yet.</p>}
         <ul className="divide-y divide-black/10">
           {products.map((p) => (

@@ -77,3 +77,41 @@ export async function deleteProduct(formData: FormData) {
     .eq("seller_id", user.id);
   revalidatePath("/", "layout");
 }
+
+type DemoProduct = {
+  title: string;
+  description: string;
+  price: number;
+  stock: number;
+  thumbnail: string;
+};
+
+// Fills the shop with sample items from DummyJSON (https://dummyjson.com), listed under the current user.
+export async function importDemoProducts() {
+  const { supabase, user } = await requireUser();
+  const res = await fetch(
+    "https://dummyjson.com/products?limit=30&select=title,description,price,stock,thumbnail",
+  );
+  if (!res.ok) redirect("/sell?error=Could not reach the demo products API");
+  const { products } = (await res.json()) as { products: DemoProduct[] };
+
+  const { data: existing } = await supabase
+    .from("products")
+    .select("name")
+    .eq("seller_id", user.id);
+  const existingNames = new Set((existing ?? []).map((p) => p.name));
+
+  const rows = products
+    .filter((p) => !existingNames.has(p.title))
+    .map((p) => ({
+      seller_id: user.id,
+      name: p.title,
+      description: p.description,
+      price: p.price,
+      stock: p.stock,
+      image_url: p.thumbnail,
+    }));
+  if (rows.length > 0) await supabase.from("products").insert(rows);
+  revalidatePath("/", "layout");
+  redirect("/");
+}
